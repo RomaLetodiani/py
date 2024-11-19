@@ -15,8 +15,18 @@ else:
 def analyze_data():
     new_data = []
 
+    set_ids = set()
+    duplicated_ids = set()
+
     # Iterate over the rows of the DataFrame
     for _, investor in data.iterrows():
+        investor_id = investor.get('id', None)
+        if investor_id in set_ids:
+            duplicated_ids.add(investor_id)
+            continue
+        else:
+            set_ids.add(investor_id)
+
         emails = investor.get('emails', [])
         linkedin = investor.get('linkedin', None)
         city = investor.get('city', {})
@@ -75,11 +85,26 @@ def analyze_data():
 
         new_data.append(updated_investor)
 
+    print(f"Number of duplicates: {len(duplicated_ids)}")
+
+    print(f"Number of unique investors: {len(set_ids)}")
+
+    print(f"Number of investors after removing duplicates: {len(new_data)}")
+
+    print(f"Number of investors before removing duplicates: {len(data)}")
     # Convert the list of dictionaries back to a DataFrame
     new_data_df = pd.DataFrame(new_data)
 
     # Save the new DataFrame to a JSON file
     new_data_df.to_json(output_file_path, orient='records', indent=4)
 
-# Run the analysis
-analyze_data()
+
+def check_duplicates():
+    # Check for duplicates in the 'id' column
+    duplicates = data[data.duplicated('id')]
+
+    if not duplicates.empty:
+        print("Duplicates found in the 'id' column:")
+        print(len(duplicates))
+    else:
+        print("No duplicates found in the 'id' column")
