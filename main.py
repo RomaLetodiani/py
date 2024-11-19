@@ -6,13 +6,25 @@ file_path = 'files/investor_110k_data.json'
 output_file_path = 'files/investor_110k_data_p.json'
 
 # Check if the file is not empty
-if os.path.getsize(file_path) > 0:
+if os.path.getsize(output_file_path) > 0:
     # Read the JSON file
-    data = pd.read_json(file_path)
+    data = pd.read_json(output_file_path)
 else:
     raise ValueError("The JSON file is empty")
 
-def analyze_data():
+def processes_data():
+    """
+    Processes a DataFrame of investor data to remove duplicates and update certain fields.
+    This function performs the following steps:
+    1. Iterates over the rows of the DataFrame to identify and remove duplicate investors based on their 'id'.
+    2. Extracts and processes various fields from each investor record, including emails, LinkedIn, city, country, state, company, past investments, markets, stages, and investor types.
+    3. Updates the investor records with new keys indicating the presence of emails and LinkedIn profiles, and replaces nested dictionaries with their 'title' values.
+    4. Deletes unnecessary keys ('foundedCompanies' and 'pipelines') from the investor records.
+    5. Prints the number of duplicates, unique investors, and the number of investors before and after removing duplicates.
+    6. Converts the processed list of investor records back to a DataFrame and saves it to a JSON file.
+    Note:
+        - The input DataFrame `data` and the output file path `output_file_path` are assumed to be defined outside this function.
+    """
     new_data = []
 
     set_ids = set()
@@ -98,6 +110,53 @@ def analyze_data():
     # Save the new DataFrame to a JSON file
     new_data_df.to_json(output_file_path, orient='records', indent=4)
 
+def analyze_data():
+    no_email_count = 0
+    yes_email_count = 0
+    no_linkedin_count = 0
+    yes_linkedin_count = 0
+
+    yes_email_no_linkedin = 0
+    no_email_yes_linkedin = 0
+
+    yes_email_yes_linkedin = 0
+    no_email_no_linkedin = 0
+
+    # Iterate over the rows of the DataFrame
+    for _, investor in data.iterrows():
+        emails = investor['emails']
+        has_email = len(emails) > 0
+        has_linkedin = investor['linkedin'] is not None
+
+        if has_email:
+            yes_email_count += 1
+            if has_linkedin:
+                yes_email_yes_linkedin += 1
+            else:
+                yes_email_no_linkedin += 1
+        else:
+            no_email_count += 1
+            if has_linkedin:
+                no_email_yes_linkedin += 1
+            else:
+                no_email_no_linkedin += 1
+
+        if has_linkedin:
+            yes_linkedin_count += 1
+        else:
+            no_linkedin_count += 1
+
+    print(f"Total number of investors: {len(data)}")
+
+    print(f"Number of investors without email: {no_email_count}")
+    print(f"Number of investors without LinkedIn: {no_linkedin_count}")
+    print(f"Number of investors with email: {yes_email_count}")
+    print(f"Number of investors with LinkedIn: {yes_linkedin_count}")
+
+    print(f"Number of investors with email but no LinkedIn: {yes_email_no_linkedin}")
+    print(f"Number of investors with no email but with LinkedIn: {no_email_yes_linkedin}")
+    print(f"Number of investors with email and LinkedIn: {yes_email_yes_linkedin}")
+    print(f"Number of investors with no email and no LinkedIn: {no_email_no_linkedin}")
 
 def check_duplicates():
     # Check for duplicates in the 'id' column
